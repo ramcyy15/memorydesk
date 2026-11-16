@@ -3,6 +3,16 @@ from google import genai
 from google.genai import types
 import os
 from dotenv import load_dotenv
+import math
+
+
+def cosine_similarity(a,b):
+    dot = sum(x*y for x,y in zip(a,b))
+    legth_a = math.sqrt(sum(x*x for x in a))
+    legth_b = math.sqrt(sum(x*x for x in b))
+    return dot / (legth_a * legth_b)
+
+    
 
 load_dotenv()
 gemini_api_key = os.getenv("GEMINI_API_KEY") 
@@ -44,8 +54,45 @@ for file_path in all_items:
 print(f"Total chunks collected: {len(all_chunks)}")
 print(all_chunks[5])  
 
-# # Embedding it to gemini
-# response = client.models.embed_content(
-# model='gemini-embedding-001',
-# contents=value,
-# config=types.EmbedContentConfig(output_dimensionality=768),
+# Embedding it to gemini
+text_to_embed = []
+
+for chunk in all_chunks:
+
+    text_to_embed.append([chunk["heading"], chunk["text"]])
+    # print(f"Appended: {chunk["heading"]} & {chunk["text"]}")
+
+# print(len(text_to_embed))
+# print(text_to_embed[0])
+
+response = client.models.embed_content(
+    model='gemini-embedding-001',
+    contents=text_to_embed,
+    config=types.EmbedContentConfig(output_dimensionality=768)
+)
+print(len(response.embeddings))
+for chunk, emb in zip(all_chunks, response.embeddings):
+    chunk['embedding'] = emb.values
+    # print(all_chunks[0]["heading"])
+    # print(len(all_chunks[0]["heading"]))
+
+question = "I was charged twice, help"
+
+response_1 = client.models.embed_content(
+    model='gemini-embedding-001',
+    contents = question,
+    config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT",output_dimensionality=768)
+)
+
+question_vector = response_1.embeddings[0].values
+
+for chunk in all_chunks:
+    chunk["score"] = cosine_similarity(question_vector, chunk['embedding'])
+
+ranked = sorted(all_chunks, key=lambda c: c["score"], reverse=True)
+
+for chunk_score in ranked[:3]:
+    print(f"{chunk_score["source"]} | {chunk_score["heading"]}")
+    print(round(chunk_score["score"], 3))
+
+
