@@ -78,6 +78,6 @@ This is a learning project. It uses **fake customer data only**, since free-tier
 
 <div align="center">
 
-Made with ☕ and curiosity by **[ramcyy15](https://github.com/ramcyy15)**
+Made with ☕ love and curiosity by **[ramcyy15](https://github.com/ramcyy15)**
 
 </div>
