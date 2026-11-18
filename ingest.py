@@ -4,25 +4,30 @@ from google.genai import types
 import os
 from dotenv import load_dotenv
 import math
+from supabase import create_client, Client
 
-
+# Functions Initialization
 def cosine_similarity(a,b):
     dot = sum(x*y for x,y in zip(a,b))
     legth_a = math.sqrt(sum(x*x for x in a))
     legth_b = math.sqrt(sum(x*x for x in b))
     return dot / (legth_a * legth_b)
-
+    
     
 
 load_dotenv()
-gemini_api_key = os.getenv("GEMINI_API_KEY") 
+# Supabase
+url: str = os.getenv("SUPABASE_URL")
+key: str = os.getenv("SUPABASE_SECRET_KEY")
+supabase: Client = create_client(url, key)
 
+# Gemini
+gemini_api_key = os.getenv("GEMINI_API_KEY") 
 client = genai.Client(api_key=gemini_api_key)
 
+# Documents chunks
 base_dir = Path("./docs")
-
 all_items = base_dir.glob("**/*.md")
-
 all_chunks = []
 
 for file_path in all_items:
@@ -47,7 +52,7 @@ for file_path in all_items:
             "source": file_path.name,        
             "chunk_number": chunk_counter,   
             "heading": heading,
-            "text": text,
+            "content": text,
         })
         chunk_counter += 1 
 
@@ -59,7 +64,7 @@ text_to_embed = []
 
 for chunk in all_chunks:
 
-    text_to_embed.append([chunk["heading"], chunk["text"]])
+    text_to_embed.append([chunk["heading"], chunk["content"]])
     # print(f"Appended: {chunk["heading"]} & {chunk["text"]}")
 
 # print(len(text_to_embed))
@@ -68,7 +73,7 @@ for chunk in all_chunks:
 response = client.models.embed_content(
     model='gemini-embedding-001',
     contents=text_to_embed,
-    config=types.EmbedContentConfig(output_dimensionality=768)
+    config=types.EmbedContentConfig(output_dimensionality=768, task_type="RETRIEVAL_DOCUMENT")
 )
 print(len(response.embeddings))
 for chunk, emb in zip(all_chunks, response.embeddings):
@@ -76,23 +81,20 @@ for chunk, emb in zip(all_chunks, response.embeddings):
     # print(all_chunks[0]["heading"])
     # print(len(all_chunks[0]["heading"]))
 
-question = "I was charged twice, help"
-
-response_1 = client.models.embed_content(
-    model='gemini-embedding-001',
-    contents = question,
-    config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT",output_dimensionality=768)
-)
-
-question_vector = response_1.embeddings[0].values
+rows = []
 
 for chunk in all_chunks:
-    chunk["score"] = cosine_similarity(question_vector, chunk['embedding'])
+    rows.append({
+        "source": chunk["source"],
+        "chunk_number": chunk["chunk_number"],
+        "heading": chunk["heading"],
+        "content": chunk["content"],
+        "embedding": chunk["embedding"]
+    })
 
-ranked = sorted(all_chunks, key=lambda c: c["score"], reverse=True)
+data = supabase.table("doc_chunks").upsert(rows, on_conflict = "source,chunk_number" ).execute()
 
-for chunk_score in ranked[:3]:
-    print(f"{chunk_score["source"]} | {chunk_score["heading"]}")
-    print(round(chunk_score["score"], 3))
+print(f"Succesfully: {len(data.data)}")
+
 
 
