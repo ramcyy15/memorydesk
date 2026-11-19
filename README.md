@@ -29,7 +29,7 @@ MemoryDesk is an AI-powered support desk with **long-term memory**. It stores pa
 - 🔎 **Semantic search**: finds relevant past interactions by meaning, not just keywords (pgvector)
 - 💸 **100% free stack**: runs entirely on free tiers
 
-## 🛠️ Tech Stack
+## 🛠️ Tech Stack USED
 
 | Layer | Tool |
 |---|---|
