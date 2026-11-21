@@ -29,7 +29,7 @@ result = supabase.rpc( "match_doc_chunks", { "query_embedding":question_vector, 
 
 
 for chunk in result.data:
-    context += f"[{chunk["source"]} #{chunk["id"]}]\n"
+    context += f"[{chunk["source"]} #{chunk["chunk_number"]}]\n"
     #print("Source & id succesfully concat")
     context += f"{chunk["content"]}\n\n"
     #print("Content succesfully concat")
