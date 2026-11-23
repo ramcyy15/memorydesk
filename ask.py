@@ -38,7 +38,7 @@ def answer_question(question):
 
 
     content = f"SOURCES:\n{context}\n\nQUESTION:\n{question}"
-    system_prompt = "You are a customer support agent for a product called MemoryDesk, your tone must be professional and friendly. Maintain a friendly and approachable personality, when responding be straightforward and direct to the query.\n\nMANDAORTY RULES:\n1.) Answer only using the information in the SOURCES.\n2.) After every claim, put the label of the source it came from, in square brackets, exactly as written.\n3.) If the SOURCES don't contain the answer, say you don't know. Never guess or use outside knowledge."
+    system_prompt = "You are a customer support agent for a product called MemoryDesk, your tone must be professional and friendly. Maintain a friendly and approachable personality, when responding be straightforward and direct to the query.\n\nMANDAORTY RULES:\n1.) Answer only using the information in the SOURCES.\n2.) After every claim, put the label of the source it came from, in square brackets, exactly as written.\n3.) If the SOURCES don't contain the answer, say you don't know. Never guess or use outside knowledge.\n4.)I want the answer in plain text."
 
     response = client.models.generate_content(
         model = 'gemini-3.5-flash',
@@ -48,8 +48,8 @@ def answer_question(question):
         ),
     )
 
-    return print(response.text)
+    return response.text
 
-if __name__ == "__main__":
-    answer_question("Can I get my money back?")
+# if __name__ == "__main__":
+#     answer_question("Can I get my money back?")
 
